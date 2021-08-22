@@ -1,0 +1,25 @@
+language: generic 
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t sergr8/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true sergr8/react-test npm test
+
+after_success:
+  - docker build -t sergr8/multi-client ./client
+  - docker build -t sergr8/multi-nginx ./nginx
+  - docker build -t sergr8/multi-server ./server
+  - docker build -t sergr8/multi-worker ./worker
+  # Log in to the docker CLI
+  # Add username and password in travis project section:
+  # "More Options" -> "Settings" -> "Environment Variables"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push sergr8/multi-client
+  - docker push sergr8/multi-nginx
+  - docker push sergr8/multi-server
+  - docker push sergr8/multi-worker
